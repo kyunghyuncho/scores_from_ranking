@@ -46,13 +46,21 @@ class ScoresFromRanking(nn.Module):
         return self.overall_score()
     
     def optimize(self, n_iter=100, lr=0.1):
+        # track the loss and stop it when it converges.
+        loss = 0.
+
         optimizer = torch.optim.Adam([self.scores], lr=lr)
-        
+
         for i in range(n_iter):
             optimizer.zero_grad()
-            loss = self()
-            loss.backward()
+            loss_ = self()
+            loss_.backward()
             optimizer.step()
+
+            if abs(loss - loss_.item()) < 1e-5:
+                break
+            # update the loss using moving average
+            loss = 0.9 * loss + 0.1 * loss_.item()
 
     def get_scores(self):
         return self.scores.detach().numpy()
